@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <title>Line (using curveCardinal)</title>
+</head>
+
+<style>
+
+</style>
+
+<body>
+  <svg width="800" height="800">
+  	<path></path>
+  </svg>
+
+  <script src="d3.js"></script>
+  <script>
+      
+function hexToRGB(h) {
+    let r = 0, g = 0, b = 0;
+
+    // 3 digits
+    if (h.length == 4) {
+      r = "0x" + h[1] + h[1];
+      g = "0x" + h[2] + h[2];
+      b = "0x" + h[3] + h[3];
+
+    // 6 digits
+    } else if (h.length == 7) {
+      r = "0x" + h[1] + h[2];
+      g = "0x" + h[3] + h[4];
+      b = "0x" + h[5] + h[6];
+    }
+
+    return [r,g,b]
+}
+ 
+function RGBToHSL(r,g,b) {
+    console.log(r)
+    // Make r, g, and b fractions of 1
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    
+    console.log(r,g,b)
+
+    // Find greatest and smallest channel values
+    let cmin = Math.min(r,g,b),
+        cmax = Math.max(r,g,b),
+        delta = cmax - cmin,
+        h = 0,
+        s = 0,
+        l = 0;
+    if (delta == 0)
+        h = 0;
+      // Red is max
+      else if (cmax == r)
+        h = ((g - b) / delta) % 6;
+      // Green is max
+      else if (cmax == g)
+        h = (b - r) / delta + 2;
+      // Blue is max
+      else
+        h = (r - g) / delta + 4;
+
+      h = Math.round(h * 60);
+
+      // Make negative hues positive behind 360°
+      if (h < 0)
+          h += 360;
+        
+     // Calculate lightness
+      l = (cmax + cmin) / 2;
+
+      // Calculate saturation
+      s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+    
+      // Multiply l and s by 100
+      s = +(s * 100).toFixed(1);
+      l = +(l * 100).toFixed(1);
+
+      return [h,s,l]
+}
+
+function HSLToHex(h,s,l) {
+  s /= 100;
+  l /= 100;
+
+  let c = (1 - Math.abs(2 * l - 1)) * s,
+      x = c * (1 - Math.abs((h / 60) % 2 - 1)),
+      m = l - c/2,
+      r = 0,
+      g = 0,
+      b = 0;
+
+  if (0 <= h && h < 60) {
+    r = c; g = x; b = 0;
+  } else if (60 <= h && h < 120) {
+    r = x; g = c; b = 0;
+  } else if (120 <= h && h < 180) {
+    r = 0; g = c; b = x;
+  } else if (180 <= h && h < 240) {
+    r = 0; g = x; b = c;
+  } else if (240 <= h && h < 300) {
+    r = x; g = 0; b = c;
+  } else if (300 <= h && h < 360) {
+    r = c; g = 0; b = x;
+  }
+  // Having obtained RGB, convert channels to hex
+  r = Math.round((r + m) * 255).toString(16);
+  g = Math.round((g + m) * 255).toString(16);
+  b = Math.round((b + m) * 255).toString(16);
+
+  // Prepend 0s, if necessary
+  if (r.length == 1)
+    r = "0" + r;
+  if (g.length == 1)
+    g = "0" + g;
+  if (b.length == 1)
+    b = "0" + b;
+
+  return "#" + r + g + b;
+}
+        
+function calculateComplementary(hex){
+  var rgb = hexToRGB(hex)
+    
+    var hsl = RGBToHSL(rgb[0],rgb[1],rgb[2])
+    console.log(hsl)
+    var h = hsl[0]
+    var s = hsl[1]
+    var l = hsl[2]
+    var oppositeH = (h+180)%360
+    var newHsl = "hsl(" + oppositeH + "," + s + "%," + l + "%)"
+    console.log(newHsl)
+    
+    var complementaryHex = HSLToHex(oppositeH,s,l)
+    console.log(complementaryHex)
+    return complementaryHex
+}
+function shiftColor(hex,degree){
+  var rgb = hexToRGB(hex)
+    
+    var hsl = RGBToHSL(rgb[0],rgb[1],rgb[2])
+    console.log(hsl)
+    var h = hsl[0]
+    var s = hsl[1]
+    var l = hsl[2]
+    var oppositeH = (h+degree)%360
+    var newHsl = "hsl(" + oppositeH + "," + s + "%," + l + "%)"
+    console.log(newHsl)
+    
+    var complementaryHex = HSLToHex(oppositeH,s,l)
+    console.log(complementaryHex)
+    return complementaryHex
+}
+
+function generateArc(start,length,height,color,width){
+        var lineGenerator = d3.line()
+        	.curve(d3.curveCardinal);
+            
+        
+        //get opposite colors
+       // var newColor = calculateComplementary(color)
+            
+            
+        //loop for width - calculate end point x, and midpoint y
+            
+        for(var w =0; w<width; w++){
+            
+            var newColor2 = shiftColor(color,Math.random()*10)
+            var newColor = shiftColor(color,Math.random()*5)
+            
+            
+            
+            var path = d3.select('svg').append("path").attr('class',"_"+w)
+            var midpointX = start[0]+length*2/3
+            var midpointY = start[1]-height
+
+            var points = [
+            	start,
+            	//[midpointX-length*1/6, midpointY-w],
+                
+            	[start[0]+length*4/7, midpointY-w],
+            	[start[0]+length*5/6, midpointY-w],
+                
+            	[start[0]+length,start[1]]
+            ];
+
+            var pathData = lineGenerator(points);
+
+            d3.select("._"+w)
+            	.attr('d', pathData)
+                .style("stroke",function(){
+                    if(Math.random()<.3){
+                        return newColor
+                    }else{
+                        return newColor2
+                    }
+                })
+                .style("fill","none")
+                .style("opacity",1)
+                .style('width',20)
+                //.attr('class',"_"+w)
+                
+    //   d3.select('svg')
+    //            .selectAll(".c_"+w)
+    //            .data(points)
+    //            .enter()
+    //            .append('circle')
+    //            .attr('cx', function(d) {
+    //                return d[0];
+    //            })
+    //            .attr('cy', function(d) {
+    //                return d[1];
+    //            })
+    //            .attr('r', 3)
+    //            .style("stroke",function(){
+    //                if(w%width==0){
+    //                    return newColor
+    //                }else{
+    //                    return color
+    //                }
+    //            })
+    //            .style("fill","none")
+    //            .attr("class","c_"+w)
+        }
+            
+       
+
+        // Also draw points for reference
+     /*
+        */
+     
+}
+
+generateArc([100, 480],500,100,"#cb5a4c",160)
+
+  </script>
+</body>
+</html>
